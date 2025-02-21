@@ -1,3 +1,4 @@
 /target
 Cargo.lock
 syslog_msg.txt
+.gitignore
