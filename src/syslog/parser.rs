@@ -1,6 +1,6 @@
 use crate::syslog::utils;  // Import utils module
 
-use chrono::{NaiveDateTime, Datelike, Utc};
+use chrono::{NaiveDateTime, Datelike, Utc, DateTime};
 use nom::{
     bytes::complete::{tag, take_until, take_while},
     character::complete::{digit1, space1},
@@ -11,7 +11,7 @@ use nom::{
 
 #[derive(Debug)]
 pub struct SyslogMessage {
-    pub timestamp: Option<NaiveDateTime>,
+    pub timestamp: Option<DateTime<Utc>>,
     pub hostname: String,
     pub facility: u8,
     pub facility_name: String,
@@ -27,7 +27,7 @@ fn parse_priority(input: &str) -> IResult<&str, (u8, String, u8, String)> {
 }
 
 // Parse timestamp (e.g., "Feb 21 10:14:32")
-fn parse_timestamp(input: &str) -> IResult<&str, Option<NaiveDateTime>> {
+fn parse_timestamp(input: &str) -> IResult<&str, Option<DateTime<Utc>>> {
     let (input, timestamp) = opt(tuple((
         take_while(|c: char| c.is_alphabetic()),  // Month (e.g., "Feb")
         space1,
@@ -39,8 +39,8 @@ fn parse_timestamp(input: &str) -> IResult<&str, Option<NaiveDateTime>> {
 
     if let Some((month, _, day, _, time, _)) = timestamp {
         let formatted_ts = format!("{} {} {} {}", Utc::now().year(), month, day, time);
-        if let Ok(parsed_time) = NaiveDateTime::parse_from_str(&formatted_ts, "%Y %b %d %H:%M:%S") {
-            return Ok((input, Some(parsed_time)));
+        if let Ok(parsed_time) = DateTime::parse_from_str(&formatted_ts, "%Y %b %d %H:%M:%S") {
+            return Ok((input, Some(parsed_time.with_timezone(&Utc))));
         }
     }
 

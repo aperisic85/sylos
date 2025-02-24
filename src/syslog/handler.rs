@@ -3,14 +3,11 @@ use std::str; // Import parser module
 use tokio::fs::OpenOptions;
 use tokio::io::{self, AsyncWriteExt};
 use tokio::net::UdpSocket;
+use tokio_postgres::{Client, NoTls};
 
-pub async fn handle_syslog_messages(socket: &UdpSocket) -> tokio::io::Result<()> {
+pub async fn handle_syslog_messages(socket: &UdpSocket, client: &Client) -> tokio::io::Result<()> {
     let mut buf = [0; 2048];
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("syslog_msg_rt.txt")
-        .await?;
+    
     loop {
         let (len, src) = socket.recv_from(&mut buf).await?;
         let message = str::from_utf8(&buf[..len]).unwrap_or("Invalid UTF-8 message");
@@ -19,26 +16,41 @@ pub async fn handle_syslog_messages(socket: &UdpSocket) -> tokio::io::Result<()>
         println!("Raw message: {}", message);
 
         if let Ok((_rest, parsed_log)) = parser::parse_syslog(message) {
-            //println!("Parsed Log: {:?}", parsed_log);
-            //filter by severity
-           // let critical_severities = vec!["Emergency", "Alert", "Critical", "Error", "Notice"];
+            // Filter by severity (critical)
+            //let critical_severities = vec!["Emergency", "Alert", "Critical", "Error"];
            // if critical_severities.contains(&parsed_log.severity_name.as_str()) {
-                let log_entry = format!(
-                    "{} - {} - {} - {} - {} - {}\n",
-                    parsed_log.timestamp.unwrap_or_default(),
-                    parsed_log.severity_name,
-                    parsed_log.hostname,
-                    parsed_log.message,
-                    src.ip(),
-                    src.port()
-                );
+                let timestamp = parsed_log.timestamp.unwrap_or_default();
+                let severity = parsed_log.severity_name;
+                let hostname = parsed_log.hostname;
+                let message = parsed_log.message;
+                let sender_ip = src.ip().to_string(); // Get sender's IP
 
-                // Write the log entry to the file asynchronously
-                file.write_all(log_entry.as_bytes()).await?;
-                println!("Log saved to file!");
+                // Cast sender port (u16) to i32 for PostgreSQL compatibility
+                let sender_port = src.port() as i32;
+
+                // Insert the parsed data into PostgreSQL
+                client
+                    .execute(
+                        r#"
+                            INSERT INTO syslog_messages (timestamp, severity, hostname, message, sender_ip, sender_port)
+                            VALUES ($1, $2, $3, $4, $5, $6)
+                        "#,
+                        &[
+                            &timestamp.to_rfc3339(),
+                            &severity,
+                            &hostname,
+                            &message,
+                            &sender_ip,
+                            &sender_port,
+                        ],
+                    )
+                    .await
+                    .expect("Failed to insert syslog message into PostgreSQL");
+
+                println!("Log saved to PostgreSQL!");
             }
-       // } else {
-          //  println!("Failed to parse syslog message.");
-     //   }
+        //} else {
+           // println!("Failed to parse syslog message.");
+        //}
     }
 }
