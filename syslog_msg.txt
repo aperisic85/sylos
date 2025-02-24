@@ -25,3 +25,5 @@
 1970-01-01 00:00:00 - Error - 1 - 2025-02-21T10:10:05.201605+00:00 localhost rsyslogd - - -  imfile error: message received is larger than max msg size; message will be split and processed as another message [v8.2212.0]
 1970-01-01 00:00:00 - Error - 1 - 2025-02-21T10:10:05.202694+00:00 localhost rsyslogd - - -  imfile error: message received is larger than max msg size; message will be split and processed as another message [v8.2212.0]
 1970-01-01 00:00:00 - Error - 1 - 2025-02-21T10:10:05.203745+00:00 localhost rsyslogd - - -  imfile error: message received is larger than max msg size; message will be split and processed as another message [v8.2212.0]
+1970-01-01 00:00:00 - Error - 1 - 2025-02-24T07:55:57.786681+00:00 localhost sudo - - -  pam_tally2(sudo:account): option deny=3 allowed in auth phase only
+1970-01-01 00:00:00 - Error - 1 - 2025-02-24T07:56:57.792783+00:00 localhost sudo - - -  pam_tally2(sudo:account): option deny=3 allowed in auth phase only
