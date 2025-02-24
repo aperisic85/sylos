@@ -5,6 +5,7 @@ use axum::{Router};
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, UdpSocket};
 use tokio::task;
+use std::process;
 
 async fn run_api_server(app: Router) {
     let adr: SocketAddr = "0.0.0.0:8080".parse().unwrap();
@@ -15,11 +16,25 @@ async fn run_api_server(app: Router) {
 }
 
 async fn run_syslog_handler() {
-    let client = syslog::create_postgres_client().await;
-    let socket: UdpSocket = UdpSocket::bind("0.0.0.0:1514").await.unwrap();
-    println!("Listening for syslog messages on {}", socket.local_addr().unwrap());
-
-    syslog::handler::handle_syslog_messages(&socket, &client).await.unwrap();
+    match syslog::create_postgres_client().await {
+        Ok(client) => {
+            match UdpSocket::bind("0.0.0.0:1514").await {
+                Ok(socket) => {
+                    println!("Listening for syslog messages on {}", socket.local_addr().unwrap());
+                    if let Err(e) = syslog::handler::handle_syslog_messages(&socket, &client).await {
+                        eprintln!("Failed to handle syslog messages: {}", e);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to bind UDP socket: {}", e);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to connect to the database: {}", e);
+            process::exit(1);
+        }
+    }
 }
 
 #[tokio::main]
