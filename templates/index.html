@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syslog Messages</title>
+</head>
+<body>
+    <h1>Syslog Messages</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Hostname</th>
+                <th>Severity</th>
+                <th>Message</th>
+                <th>Sender IP</th>
+                <th>Sender Port</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for message in messages %}
+            <tr>
+                <td>{{ message.timestamp }}</td>
+                <td>{{ message.hostname }}</td>
+                <td>{{ message.severity }}</td>
+                <td>{{ message.message }}</td>
+                <td>{{ message.sender_ip }}</td>
+                <td>{{ message.sender_port }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

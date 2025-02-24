@@ -1,6 +1,6 @@
 use crate::syslog::utils;  // Import utils module
 
-use chrono::{Datelike, Utc, DateTime};
+use chrono::{Datelike, Utc, DateTime, NaiveDateTime};
 use nom::{
     bytes::complete::{tag, take_until, take_while},
     character::complete::{digit1, space1},
@@ -31,16 +31,22 @@ fn parse_timestamp(input: &str) -> IResult<&str, Option<DateTime<Utc>>> {
     let (input, timestamp) = opt(tuple((
         take_while(|c: char| c.is_alphabetic()),  // Month (e.g., "Feb")
         space1,
-        take_while(|c: char| c.is_digit(10)),      // Day (e.g., "21")
+        take_while(|c: char| c.is_digit(10)),      // Day (e.g., "24")
         space1,
-        take_until(" "),                           // Time (e.g., "10:14:32")
+        take_until(" "),                           // Time (e.g., "11:01:52:728")
         space1,
     )))(input)?;
 
     if let Some((month, _, day, _, time, _)) = timestamp {
+        // Add the current year and format the timestamp with milliseconds
         let formatted_ts = format!("{} {} {} {}", Utc::now().year(), month, day, time);
-        if let Ok(parsed_time) = DateTime::parse_from_str(&formatted_ts, "%Y %b %d %H:%M:%S") {
-            return Ok((input, Some(parsed_time.with_timezone(&Utc))));
+        println!("{}", formatted_ts);
+
+        // Use NaiveDateTime to parse the timestamp (without timezone)
+        if let Ok(naive_time) = NaiveDateTime::parse_from_str(&formatted_ts, "%Y %b %d %H:%M:%S:%f") {
+            // Convert to DateTime<Utc>
+            let utc_time = DateTime::from_utc(naive_time, Utc);
+            return Ok((input, Some(utc_time)));
         }
     }
 
