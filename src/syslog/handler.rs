@@ -1,9 +1,7 @@
 use crate::syslog::parser;
 use std::str; // Import parser module
-use tokio::fs::OpenOptions;
-use tokio::io::{self, AsyncWriteExt};
 use tokio::net::UdpSocket;
-use tokio_postgres::{Client, NoTls};
+use tokio_postgres::Client;
 
 pub async fn handle_syslog_messages(socket: &UdpSocket, client: &Client) -> tokio::io::Result<()> {
     let mut buf = [0; 2048];

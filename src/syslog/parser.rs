@@ -1,6 +1,6 @@
 use crate::syslog::utils;  // Import utils module
 
-use chrono::{NaiveDateTime, Datelike, Utc, DateTime};
+use chrono::{Datelike, Utc, DateTime};
 use nom::{
     bytes::complete::{tag, take_until, take_while},
     character::complete::{digit1, space1},
