@@ -29,7 +29,7 @@ pub fn format_priority(priority: u8) -> String {
 
 pub async fn create_postgres_client() -> Result<Client,Error> {
     // Replace with your PostgreSQL connection string
-    let connection_str = "host=localhost user=postgres password=mypas dbname=template1";
+    let connection_str = "host=localhost user=postgres password=mypas dbname=syslog_db";
     
     let (client, connection) = tokio_postgres::connect(connection_str, NoTls)
         .await?;

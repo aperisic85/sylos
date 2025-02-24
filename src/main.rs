@@ -1,7 +1,7 @@
 mod syslog;
 mod api;
 
-use axum::{Router};
+use axum::{Router, routing::get, routing::post};
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, UdpSocket};
 use tokio::task;
@@ -32,7 +32,6 @@ async fn run_syslog_handler() {
         }
         Err(e) => {
             eprintln!("Failed to connect to the database: {}", e);
-            process::exit(1);
         }
     }
 }
