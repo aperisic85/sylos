@@ -3,7 +3,7 @@ use tokio_postgres::{NoTls, Client};
 use crate::api::models::SyslogMessage;
 pub async fn fetch_messages() -> Vec<SyslogMessage> {
     let (client, connection) = tokio_postgres::connect(
-        "host=127.0.0.1 user=postgres password=mypas dbname=syslog_db",
+        "host=127.0.0.1 user=postgres password=mypas dbname=template1",
         NoTls,
     )
     .await

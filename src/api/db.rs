@@ -1,7 +1,7 @@
 use tokio_postgres::{Client, NoTls};
 
 pub async fn get_db_client() -> Client {
-    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname=syslog_db password=mypas", NoTls)
+    let (client, connection) = tokio_postgres::connect("host=localhost user=postgres dbname=template1 password=mypas", NoTls)
         .await
         .expect("Failed to connect to the database");
 
