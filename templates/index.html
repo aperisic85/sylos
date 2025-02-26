@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syslog Messages</title>
     <style>
-        /* General body styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
             margin: 0;
             padding: 0;
             color: #333;
+            text-align: center;
         }
 
-        /* Centering the content and adding padding */
         .container {
-            width: 80%;
+            width: 90%; /* Make container more fluid */
             margin: 50px auto;
             padding: 20px;
             background-color: white;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
+            max-width: 1200px; /* Limit the max width for large screens */
         }
 
         h1 {
@@ -29,7 +29,9 @@
             color: #4CAF50;
         }
 
-        /* Table styling */
+        /* Wrapper for the table to enable horizontal scrolling */
+      
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -37,7 +39,6 @@
             font-size: 14px;
             table-layout: auto; /* Allow for column resizing */
         }
-
         th, td {
             padding: 10px;
             text-align: left;
@@ -54,7 +55,7 @@
 
         td {
             background-color: #fafafa;
-            max-width: 300px; /* Limit the width for messages */
+            max-width: 300px
         }
 
         tr:nth-child(even) td {
@@ -65,7 +66,6 @@
             background-color: #ddd;
         }
 
-        /* Button styles */
         .refresh-btn {
             display: inline-block;
             background-color: #4CAF50;
@@ -77,90 +77,80 @@
             text-decoration: none;
             font-size: 16px;
             margin-top: 20px;
-            text-align: center;
         }
 
         .refresh-btn:hover {
             background-color: #45a049;
         }
 
-        /* Severity level colors */
-        .severity-info { color: blue; }
-        .severity-warning { color: orange; }
-        .severity-error { color: red; font-weight: bold; }
-
-        /* Media Queries for Responsiveness */
+        /* Media Query for smaller screens */
         @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+
             .container {
-                width: 90%;
+                width: 95%; /* Allow for more space on mobile devices */
                 margin: 20px auto;
                 padding: 15px;
             }
 
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            /* Make the table scrollable horizontally on small screens */
             table {
-                font-size: 12px;
-                overflow-x: auto;
-                display: block;
-            }
-
-            .refresh-btn {
-                padding: 8px 12px;
-                font-size: 14px;
-            }
-        }
-
-        /* Small mobile screens */
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.25rem;
-            }
-
-            .refresh-btn {
-                font-size: 12px;
-                padding: 6px 10px;
-            }
-
-            table {
-                font-size: 10px;
+                font-size: 12px; /* Smaller font for smaller screens */
             }
 
             th, td {
-                padding: 8px;
+                padding: 8px; /* Smaller padding on small screens */
+            }
+
+            .refresh-btn {
+                font-size: 14px; /* Make button text smaller */
+                padding: 8px 12px; /* Smaller padding for mobile */
+            }
+        }
+
+        /* Media Query for very small screens */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 22px; /* Adjust header size for very small screens */
+            }
+
+            .container {
+                width: 100%;
+                margin: 10px auto;
+                padding: 10px;
+            }
+
+            .refresh-btn {
+                width: 100%; /* Make the button full-width on very small screens */
             }
         }
     </style>
-    <script>
-        // Auto-refresh the page every 30 seconds
-        setInterval(function() {
-            location.reload();
-        }, 30000); // Refresh every 30 seconds
-    </script>
 </head>
 <body>
     <div class="container">
         <h1>Syslog Messages</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>Hostname</th>
-                    <th>Severity</th>
-                    <th>Message</th>
-                    <th>Sender IP</th>
-                    <th>Sender Port</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if messages.len() == 0 %}
+
+        <!-- Form to submit request for loading messages -->
+        <form action="/" method="get">
+            <input type="hidden" name="load" value="true">
+            <button type="submit" class="refresh-btn">Load Messages</button>
+        </form>
+
+        {% if messages.len() > 0 %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="6" style="text-align: center; font-weight: bold; color: #888;">No syslog messages found</td>
+                        <th>Timestamp</th>
+                        <th>Hostname</th>
+                        <th>Severity</th>
+                        <th>Message</th>
+                        <th>Sender IP</th>
+                        <th>Sender Port</th>
                     </tr>
-                {% else %}
+                </thead>
+                <tbody>
                     {% for message in messages %}
                     <tr>
                         <td>{{ message.timestamp }}</td>
@@ -173,10 +163,10 @@
                         <td>{{ message.sender_port }}</td>
                     </tr>
                     {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
-        <a href="/" class="refresh-btn">Refresh</a>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
     </div>
 </body>
 </html>
