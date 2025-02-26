@@ -11,7 +11,7 @@ pub async fn show_syslog_messages() -> impl axum::response::IntoResponse {
 
 
 async fn fetch_syslog_messages(client: &Client) -> Vec<SyslogMessage> {
-    let query = "SELECT timestamp, severity, hostname, message, sender_ip, sender_port FROM syslog_messages ORDER BY timestamp DESC LIMIT 100";
+    let query = "SELECT timestamp, severity, hostname, message, sender_ip, sender_port FROM syslog_messages ORDER BY timestamp DESC LIMIT 50";
     let rows = client.query(query, &[]).await.unwrap();
 
     let mut messages = Vec::new();

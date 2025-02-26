@@ -35,12 +35,15 @@
             border-collapse: collapse;
             margin-top: 20px;
             font-size: 14px;
+            table-layout: auto; /* Allow for column resizing */
         }
 
         th, td {
             padding: 10px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+            word-wrap: break-word; /* Enable word wrapping */
+            white-space: normal;  /* Allow for line breaks within table cells */
         }
 
         th {
@@ -51,6 +54,7 @@
 
         td {
             background-color: #fafafa;
+            max-width: 300px; /* Limit the width for messages */
         }
 
         tr:nth-child(even) td {
@@ -79,6 +83,11 @@
         .refresh-btn:hover {
             background-color: #45a049;
         }
+
+        /* Severity level colors */
+        .severity-info { color: blue; }
+        .severity-warning { color: orange; }
+        .severity-error { color: red; font-weight: bold; }
 
         /* Media Queries for Responsiveness */
         @media (max-width: 768px) {
@@ -125,6 +134,12 @@
             }
         }
     </style>
+    <script>
+        // Auto-refresh the page every 30 seconds
+        setInterval(function() {
+            location.reload();
+        }, 30000); // Refresh every 30 seconds
+    </script>
 </head>
 <body>
     <div class="container">
@@ -141,16 +156,24 @@
                 </tr>
             </thead>
             <tbody>
-                {% for message in messages %}
-                <tr>
-                    <td>{{ message.timestamp }}</td>
-                    <td>{{ message.hostname }}</td>
-                    <td>{{ message.severity }}</td>
-                    <td>{{ message.message }}</td>
-                    <td>{{ message.sender_ip }}</td>
-                    <td>{{ message.sender_port }}</td>
-                </tr>
-                {% endfor %}
+                {% if messages.len() == 0 %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; font-weight: bold; color: #888;">No syslog messages found</td>
+                    </tr>
+                {% else %}
+                    {% for message in messages %}
+                    <tr>
+                        <td>{{ message.timestamp }}</td>
+                        <td>{{ message.hostname }}</td>
+                        <td {% if message.severity == "Informational" %}class="severity-info"{% else if message.severity == "Warning" %}class="severity-warning"{% else if message.severity == "Error" %}class="severity-error"{% endif %}>
+                            {{ message.severity }}
+                        </td>
+                        <td>{{ message.message }}</td>
+                        <td>{{ message.sender_ip }}</td>
+                        <td>{{ message.sender_port }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
             </tbody>
         </table>
         <a href="/" class="refresh-btn">Refresh</a>

@@ -1,54 +1,48 @@
-mod syslog;
-mod api;
-
 use axum::{Router, routing::get, routing::post};
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, UdpSocket};
 use tokio::task;
-use std::process;
+use tokio::signal;
+use tracing::{info, error};
 
-async fn run_api_server(app: Router) {
-    let adr: SocketAddr = "0.0.0.0:8080".parse().unwrap();
-    let listener = TcpListener::bind(&adr).await.unwrap();
-    println!("Starting app...");
-    axum::serve(listener, app).await.unwrap();
-    println!("Listening for API on {}", adr);
+mod syslog;
+mod api;
+
+async fn run_api_server(app: Router) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let adr: SocketAddr = "0.0.0.0:8080".parse()?;
+    let listener = TcpListener::bind(&adr).await?;
+    info!("API Server listening on {}", adr);
+    axum::serve(listener, app).await?;
+    Ok(())
 }
 
-async fn run_syslog_handler() {
-    match syslog::create_postgres_client().await {
-        Ok(client) => {
-            match UdpSocket::bind("0.0.0.0:1514").await {
-                Ok(socket) => {
-                    println!("Listening for syslog messages on {}", socket.local_addr().unwrap());
-                    if let Err(e) = syslog::handler::handle_syslog_messages(&socket, &client).await {
-                        eprintln!("Failed to handle syslog messages: {}", e);
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to bind UDP socket: {}", e);
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to connect to the database: {}", e);
-        }
-    }
+async fn run_syslog_handler() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client = syslog::create_postgres_client().await?;
+    let socket = UdpSocket::bind("0.0.0.0:1514").await?;
+    info!("Syslog listener bound to {}", socket.local_addr()?);
+    
+    syslog::handler::handle_syslog_messages(&socket, &client).await?;
+    Ok(())
 }
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init(); // Initialize logging
+
     let app = api::create_app();
 
-    // Spawn the API server in a new task
-    tokio::spawn(run_api_server(app));
+    let api_task = tokio::spawn(run_api_server(app));
+    let syslog_task = tokio::spawn(run_syslog_handler());
+    let shutdown_task = tokio::spawn(async {
+        signal::ctrl_c().await.unwrap();
+        info!("Received shutdown signal, exiting...");
+    });
 
-    // Spawn the syslog handler in a new task
-    tokio::spawn(run_syslog_handler());
-
-    // Let the runtime handle async tasks concurrently
-    // Using tokio::task::block_in_place or similar to avoid blocking the main task
-    loop {
-        tokio::task::yield_now().await;
+    tokio::select! {
+        _ = api_task => error!("API Server crashed"),
+        _ = syslog_task => error!("Syslog handler crashed"),
+        _ = shutdown_task => {
+            info!("Shutting down gracefully...");
+        }
     }
 }
